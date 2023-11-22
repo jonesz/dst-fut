@@ -1,40 +1,20 @@
-import "../../diku-dk/sorts/radix_sort"
-
-module type set = {
-	type t
-
-	val empty : t
-}
+import "../../diku-dk/sorts/merge_sort"
+import "../../diku-dk/containers/bitset"
 
 module type bba = {
-	type u
+	module set : bitset
+
+	type u [n] = #id | #elem (set.bitset [n])
 	type m
 
-	type t = #id | #elem (u, m)
-
-	val universe : t -> u
-	val mass : t -> m
-
-	val neutral_element : t
-	val sort [x] : [x]t -> [x]t
+	val sort [n][x] : [x](u[n], m) -> [x](u[n], m)
 }
 
-module mk_bba (U: bitset) (M: real): bba with u = U.t with m = M.t = {
-	type u = U.t
+module mk_bba (U: bitset) (M: real): bba with m = M.t = {
+	module set = U
+
+	type u [n] = #id | #elem (set.bitset [n])
 	type m = M.t
 
-	type t = #id | #elem (u, m)
-
-	def universe (z: t): u = 
-		match z
-			case #elem (u, _) -> u
-			case #id -> U.empty
-
-	def mass (z: t): m = 
-		match z
-			case #id -> M.i64 0
-			case #elem (_, m) -> m
-
-	def neutral_element: t = #id
-	def sort z = ???
+	def sort = merge_sort_by_key (\(_, m) -> m) (M.<=)
 }
