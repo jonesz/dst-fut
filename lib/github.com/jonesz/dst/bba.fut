@@ -1,56 +1,45 @@
-import "../../diku-dk/sorts/merge_sort"
+-- | Basic Belief Assumptions.
+-- Ethan Jones <etn.jones@gmail.com>, 2023.
+
 import "../../diku-dk/containers/bitset"
+import "../../diku-dk/sorts/merge_sort"
 
 module type bba = {
-	module set : bitset
+	module u_set : bitset
+	-- | Set representation of a BBA.
+	type u [n] = u_set.bitset [n]
 
-	type u [n] = set.bitset [n]
+	-- | Mass representation of a BBA.
 	type m
-
-	module r   : {
+	module m_real   : {
 		include real with t = m
 	}
 
-	-- | A BBA is a tagged (set, mass) tuple pair.
-	type t [n] = #nil | #elem (u[n], m)
+	type t [n]
 
-	-- | Return the nil representation.
-	val nil [n] : t[n]
-
-	-- | Return the mass within a value `t[n]`.
+	-- | Return the set representation of a focal element `t[n]`.
+	val set  [n] : t[n] -> u[n]
+	-- | Return the mass of a focal element `t[n]`.
 	val mass [n] : t[n] -> m
 
-	-- | Sort each bitset from least to most.
-	val sort [n][x] : [x]t[n] -> [x]t[n]
-	-- | Return all values that are `#elem`.
-	val elem [n][x] : [x]t[n] -> []t[n]
+	-- | Sort each focal element from least mass to most mass.
+	val sort [n][x] : [x](u[n], m) -> [x](u[n], m)
 }
 
-module mk_bba (U: bitset) (M: real): bba with m = M.t = {
-	module set = U
-	module r   = M
+-- | A BBA under a CWA hypothesis; that is the empty set contains
+-- | mass zero.
+module mk_bba_cwa (U: bitset) (M: real): bba with m = M.t with u[n] = U.bitset[n] with t[n] = (U.bitset[n], M.t) = {
+	type u [n] = U.bitset [n]
+	module u_set = U
 
-	type u [n] = set.bitset [n]
 	type m = M.t
-	type t [n] = #nil | #elem (u[n], m)
+	module m_real = M
 
-	def nil [n]: t[n] = #nil
+	type t [n] = (u[n], m)
 
-	def mass [n] (e: t[n]) =
-		match e
-			case #nil         -> M.i64 0
-			case #elem (_, m) -> m
+	def set  [n] (e: t[n]): u[n] = e.0
+	def mass [n] (e: t[n]): m    = e.1
 
-	def sort [n][x] (e: [x]t[n]) = merge_sort_by_key 
-		(\x -> match x
-			case #nil          -> M.i64 0
-			case #elem (_s, m) -> m) 
-		(M.<=) e
-
-	def elem [n][x] (e: [x]t[n]) =
-		filter 
-			(\i -> match i
-				case #nil    -> false
-				case #elem _ -> true) 
-			e
+	def sort e = 
+		merge_sort_by_key (mass) (M.<=) e
 }
