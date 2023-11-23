@@ -17,6 +17,8 @@ module type bba = {
 
 	type t [n]
 
+	-- |
+	val mk   [n] : u[(n - 1) / u_set.nbs + 1] -> m -> t[(n - 1) / u_set.nbs + 1]
 	-- | Return the `nil` element.
 	val nil  [n] : t[(n - 1) / u_set.nbs + 1]
 
@@ -26,7 +28,7 @@ module type bba = {
 	val mass [n] : t[(n - 1) / u_set.nbs + 1] -> m
 
 	-- | Sort each focal element from least mass to most mass.
-	val sort [n][x] : [x]t[n] -> [x]t[n]
+	val sort [n][x] : [x]t[(n - 1) / u_set.nbs + 1] -> [x]t[(n - 1) / u_set.nbs + 1]
 }
 
 -- | A BBA under a CWA hypothesis; that is the empty set contains
@@ -40,6 +42,7 @@ module mk_bba_cwa (U: bitset) (M: real): bba with m = M.t with u[n] = U.bitset[n
 
 	type t [n] = (u[n], m)
 
+	def mk   a b = (a, b)
 	def nil  [n] = ((U.empty n), M.i64 0)
 
 	def set  [n] (e: t[n]): u[n] = e.0
