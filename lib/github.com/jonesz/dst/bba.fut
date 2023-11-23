@@ -21,9 +21,9 @@ module type bba = {
 	val nil  [n] : t[(n - 1) / u_set.nbs + 1]
 
 	-- | Return the set representation of a focal element `t[n]`.
-	val set  [n] : t[n] -> u[n]
+	val set  [n] : t[(n - 1) / u_set.nbs + 1] -> u[(n - 1) / u_set.nbs + 1]
 	-- | Return the mass of a focal element `t[n]`.
-	val mass [n] : t[n] -> m
+	val mass [n] : t[(n - 1) / u_set.nbs + 1] -> m
 
 	-- | Sort each focal element from least mass to most mass.
 	val sort [n][x] : [x]t[n] -> [x]t[n]
