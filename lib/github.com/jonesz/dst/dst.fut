@@ -30,7 +30,7 @@ module mk_dst(B: bba): dst with u[n] = B.u[n] with m = B.m with t[n] = B.t[n] = 
 				then B.m_real.i64 1
 				else B.m_real.i64 0
 		) |> map2 (B.m_real.*) (map (B.mass) e)
-		|> reduce (B.m_real.+) (B.m_real.i64 0)
+		|> B.m_real.sum
 
 	def pl e q =
 		-- pl(Q) = 1 - bl(not Q)
