@@ -1,46 +1,38 @@
 --| Reasoning with uncertainty via Dempster-Shafer Theory.
 -- Ethan Jones <etn.jones@gmail.com>, 2023.
 
-import "base"
-import "comb"
-import "../../diku-dk/sorts/radix_sort"
+import "../../diku-dk/containers/bitset"
+import "bba"
 
 module type dst = {
-	-- | Type to represent a set within the universe.
-	type t
-	-- | Scalar type to represent mass.
+	module u_set : bitset
+	type u [n]
 	type m
+	type t [n]
 
  	-- | Given a subset of the frame of discernment, compute the the belief.
- 	val bel [f] : [f](t, m) -> t -> m
+ 	val bel [n][f] : [f]t[(n - 1) / u_set.nbs + 1] -> u[(n - 1) / u_set.nbs + 1] -> m
  	-- | Given a subset of the frame of discernment, compute the the plausability.
- 	val pl  [f] : [f](t, m) -> t -> m
- 
- 	-- We avoid irregular arrays here by requiring the frame of discernment to be of a certain length.
- 	-- rule, neutral_element, then the sets of FoD. TODO: Is the actual "neutral element" a tagged type.
-    -- val comb_reduce [f][z] : ([f](t, m) -> [f](t, m) -> [f](t, m)) -> [f](t, m) -> [z][f](t, m) -> [f](t, m)
-
-	include comb with t = t with m = m
+ 	val pl  [n][f] : [f]t[(n - 1) / u_set.nbs + 1] -> u[(n - 1) / u_set.nbs + 1] -> m
 }
 
-module mk_dst_integral(X: integral) (M: real): dst with t = X.t with m = M.t = {
-	type t = X.t
-	type m = M.t
+module mk_dst(B: bba): dst with u[n] = B.u[n] with m = B.m with t[n] = B.t[n] = {
+	module u_set = B.u_set
 
-	module B = mk_base_integral X
-	module C = mk_comb_integral X M
+	type u [n] = B.u [n]
+	type m = B.m
+	type t [n] = B.t [n]
 
 	def bel e q =
-		map (\(b_set, b_mass) -> 
-			let cond = B.is_subset b_set q
-			in if cond
-				then b_mass
-				else (M.i32 0)
-		) e |> reduce (M.+) (M.i32 0)
+		map (B.set) e
+		|> map (\p 
+			-> if (u_set.is_subset p q)
+				then B.m_real.i64 1
+				else B.m_real.i64 0
+		) |> map2 (B.m_real.*) (map (B.mass) e)
+		|> reduce (B.m_real.+) (B.m_real.i64 0)
 
 	def pl e q =
 		-- pl(Q) = 1 - bl(not Q)
-		B.not q |> bel e |> (M.-) (M.i32 1)
-
-	open C
+		u_set.complement q |> bel e |> (B.m_real.-) (B.m_real.i64 1)
 }
