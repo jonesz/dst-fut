@@ -20,6 +20,9 @@ module type bba = {
 	-- | Return the `nil` element.
 	val nil  [n] : t[(n - 1) / u_set.nbs + 1]
 
+	-- | Convert from an i64 value and a mass `m`.
+	val i64_m : (n: i64) -> i64 -> m -> t[(n - 1) / u_set.nbs + 1]
+
 	-- | Return the set representation of a focal element `t[n]`.
 	val set  [n] : t[(n - 1) / u_set.nbs + 1] -> u_set.bitset[(n - 1) / u_set.nbs + 1]
 	-- | Return the mass of a focal element `t[n]`.
@@ -41,6 +44,18 @@ module mk_bba_cwa (U: bitset) (M: real): bba with m = M.t with t[n] = (U.bitset[
 
 	def mk   a b = (a, b)
 	def nil  [n] = ((U.empty n), M.i64 0)
+
+	def i64_m n a b = 
+		let bs = 
+			map (\i 
+				-> i64.get_bit i a) 
+			(map (i32.i64) (iota n))       -- Convert to bit arr.
+			|> zip (iota n)                -- Zip with indices.
+			|> filter (\(_i, v) -> v == 1) -- Remove unset indices.
+			|> map (.0)                    -- Map to indices only.
+			|> u_set.from_array n
+		in mk bs b
+
 
 	def set  [n] (e: t[n]): U.bitset[n] = e.0
 	def mass [n] (e: t[n]): m    = e.1

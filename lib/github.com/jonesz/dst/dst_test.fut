@@ -1,18 +1,21 @@
 import "dst"
+import "bba"
 import "comb"
+import "../../diku-dk/containers/bitset"
 
 -- The Schroedinger's cat example from
 -- https://en.wikipedia.org/wiki/Dempster%E2%80%93Shafer_theory
 
-module di32 = mk_dst_integral  i32 f64
+module bi32 = mk_bba_cwa (mk_bitset i32) f64
+module di32 = mk_dst (mk_bba_cwa (mk_bitset i32) f64)
 
 -- ==
 -- entry: bel_i32
--- input  { [ 2, 1, 3 ] [0.2f64, 0.5, 0.3] }
--- output { [ 0.2, 0.5, 1.0 ] }
-entry bel_i32 s m =
-	let e = zip s m
-	in map (di32.bel e) s
+-- input  { [ 2i64, 1, 3 ] [0.2f64, 0.5, 0.3] }
+-- output { [ 0.2f64, 0.5, 1.0 ] }
+entry bel_i32 [n] s m =
+	let e = map2 (bi32.i64_m n) s m
+	in map (di32.bel e) (map (bi32.mass) e)
 
 -- ==
 -- entry: pl_i32
