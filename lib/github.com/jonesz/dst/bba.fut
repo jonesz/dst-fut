@@ -15,7 +15,7 @@ module type bba = {
 
 	type t [n]
 
-	-- |
+	-- | Make a `t` value from (bitset[n], m).
 	val mk   [n] : u_set.bitset[(n - 1) / u_set.nbs + 1] -> m -> t[(n - 1) / u_set.nbs + 1]
 	-- | Return the `nil` element.
 	val nil  [n] : t[(n - 1) / u_set.nbs + 1]
