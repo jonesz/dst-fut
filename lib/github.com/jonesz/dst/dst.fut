@@ -6,20 +6,19 @@ import "bba"
 
 module type dst = {
 	module u_set : bitset
-	type u [n]
+
 	type m
 	type t [n]
 
  	-- | Given a subset of the frame of discernment, compute the the belief.
- 	val bel [n][f] : [f]t[(n - 1) / u_set.nbs + 1] -> u[(n - 1) / u_set.nbs + 1] -> m
+ 	val bel [n][f] : [f]t[(n - 1) / u_set.nbs + 1] -> u_set.bitset[(n - 1) / u_set.nbs + 1] -> m
  	-- | Given a subset of the frame of discernment, compute the the plausability.
- 	val pl  [n][f] : [f]t[(n - 1) / u_set.nbs + 1] -> u[(n - 1) / u_set.nbs + 1] -> m
+ 	val pl  [n][f] : [f]t[(n - 1) / u_set.nbs + 1] -> u_set.bitset[(n - 1) / u_set.nbs + 1] -> m
 }
 
-module mk_dst(B: bba): dst with u[n] = B.u[n] with m = B.m with t[n] = B.t[n] = {
+module mk_dst(B: bba): dst with m = B.m with t[n] = B.t[n] = {
 	module u_set = B.u_set
 
-	type u [n] = B.u [n]
 	type m = B.m
 	type t [n] = B.t [n]
 
