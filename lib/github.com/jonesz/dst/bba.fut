@@ -5,60 +5,58 @@ import "../../diku-dk/containers/bitset"
 import "../../diku-dk/sorts/merge_sort"
 
 module type bba = {
-	module u_set : bitset
+	-- | Set representation in a BBA.
+	type u [n]
+	module u_set: bitset
 
-	-- | Mass representation of a BBA.
+	-- | Mass representation in a BBA.
 	type m
 	module m_real   : {
 		include real with t = m
 	}
 
+	-- | Tuple of (u, m).
+	-- Left abstract because there's a chance we'd like to pad
+	-- this with nonsense.
 	type t [n]
 
-	-- | Make a `t` value from (bitset[n], m).
-	val mk   [n] : u_set.bitset[(n - 1) / u_set.nbs + 1] -> m -> t[(n - 1) / u_set.nbs + 1]
+	-- | Make a `t` value from `u[n]` and `m`.
+	val mk    [n] : u[n] -> m -> t[n]
 	-- | Return the `nil` element.
-	val nil  [n] : t[(n - 1) / u_set.nbs + 1]
+	val nil       : (n: i64) -> t[(n - 1) / u_set.nbs + 1]
 
-	-- | Convert from an i64 value and a mass `m`.
-	val i64_m : (n: i64) -> i64 -> m -> t[(n - 1) / u_set.nbs + 1]
+	-- | Convert a list of indices and a mass into a type `t`.
+	val i64_m   [z] : (n: i64) -> [z]i64 -> m -> t[(n - 1) / u_set.nbs + 1]
 
 	-- | Return the set representation of a focal element `t[n]`.
-	val set  [n] : t[(n - 1) / u_set.nbs + 1] -> u_set.bitset[(n - 1) / u_set.nbs + 1]
-	-- | Return the mass of a focal element `t[n]`.
-	val mass [n] : t[(n - 1) / u_set.nbs + 1] -> m
+	val set  [n] : t[n] -> u[n]
+	-- | Return the mass of a focal element `t`.
+	val mass [n] : t[n] -> m
 
 	-- | Sort each focal element from least mass to most mass.
-	val sort [n][x] : [x]t[(n - 1) / u_set.nbs + 1] -> [x]t[(n - 1) / u_set.nbs + 1]
+	val sort [n][x] : [x]t[n] -> [x]t[n]
 }
 
 -- | A BBA under a CWA hypothesis; that is the empty set contains
 -- | mass zero.
-module mk_bba_cwa (U: bitset) (M: real): bba with m = M.t with t[n] = (U.bitset[n], M.t) = {
+module mk_bba_cwa (U: bitset) (M: real): bba with u[n] = U.bitset[n] with m = M.t with t[n] = (U.bitset[n], M.t) = {
+	type u[n] = U.bitset[n]
 	module u_set = U
 
 	type m = M.t
 	module m_real = M
 
-	type t [n] = (U.bitset[n], m)
+	type t[n] = (U.bitset[n], m)
 
-	def mk   a b = (a, b)
-	def nil  [n] = ((U.empty n), M.i64 0)
+	def mk a b = (a, b)
+	def nil n  = 
+		((U.empty n), M.i64 0)
 
-	def i64_m n a b = 
-		let bs = 
-			map (\i 
-				-> i64.get_bit i a) 
-			(map (i32.i64) (iota n))       -- Convert to bit arr.
-			|> zip (iota n)                -- Zip with indices.
-			|> filter (\(_i, v) -> v == 1) -- Remove unset indices.
-			|> map (.0)                    -- Map to indices only.
-			|> u_set.from_array n
-		in mk bs b
+	def i64_m n z m =
+		mk (U.from_array n z) m
 
-
-	def set  [n] (e: t[n]): U.bitset[n] = e.0
-	def mass [n] (e: t[n]): m    = e.1
+	def set  [n] (e: t[n]) = e.0
+	def mass [n] (e: t[n]) = e.1
 
 	def sort e = 
 		merge_sort_by_key (mass) (M.<=) e
