@@ -57,7 +57,11 @@ mod bitset {
 
         /// Compute whether 'a' is a subset of 'b'.
         fn is_subset(a: &Self::S, b: &Self::S) -> bool {
-            todo!();
+            a.buf()
+                .iter()
+                .zip(b.buf())
+                .map(|(a, b)| a & b == *a)
+                .all(|x| x)
         }
     }
 }
