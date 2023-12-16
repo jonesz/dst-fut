@@ -20,9 +20,14 @@ mod bitset {
     where
         [(); (N / std::mem::size_of::<u8>()) + 1]:,
     {
-        /// Given a u8 buf, return the wrapped BitSet struct.
-        pub fn from_buf_u8(buf: [u8; (N / std::mem::size_of::<u8>()) + 1]) -> Self {
-            BitSet { buf }
+        /// Wrap a BitSet struct around something that can be turned into the apppropiate
+        /// sized buf.
+        pub fn from_buf(buf: impl Into<[u8; (N / std::mem::size_of::<u8>()) + 1]>) -> Self {
+            BitSet { buf: buf.into() }
+        }
+
+        fn buf(&self) -> &[u8; (N / std::mem::size_of::<u8>()) + 1] {
+            &self.buf
         }
     }
 
@@ -34,7 +39,11 @@ mod bitset {
 
         /// Compute the union between two sets.
         fn union(a: &Self::S, b: &Self::S) -> Self::S {
-            todo!();
+            let mut z = [0u8; (N / std::mem::size_of::<u8>()) + 1];
+            for (idx, mem) in z.iter_mut().enumerate() {
+                *mem = a.buf().get(idx).unwrap() | b.buf().get(idx).unwrap();
+            }
+            BitSet::<N>::from_buf(z)
         }
 
         /// Compute the intersection between two sets.
