@@ -1,5 +1,7 @@
-mod bitset {
-    trait SetOperations {
+use super::dst::DST;
+
+pub mod bitset {
+    pub trait SetOperations {
         type S;
         /// Compute the union between two sets.
         fn union(a: &Self::S, b: &Self::S) -> Self::S;
@@ -9,7 +11,7 @@ mod bitset {
         fn is_subset(a: &Self::S, b: &Self::S) -> bool;
     }
 
-    pub(super) struct BitSet<const N: usize>
+    pub struct BitSet<const N: usize>
     where
         [(); (N / std::mem::size_of::<u8>()) + 1]:,
     {
@@ -71,4 +73,35 @@ where
     [(); (N / std::mem::size_of::<u8>()) + 1]:,
 {
     bba: Vec<(bitset::BitSet<N>, f64)>,
+}
+
+impl<const N: usize> DST for BBA<N>
+where
+    [(); (N / std::mem::size_of::<u8>()) + 1]:,
+{
+    type Q = bitset::BitSet<N>;
+    type B = BBA<N>;
+
+    fn bel(a: &Self::B, q: &Self::Q) -> f64 {
+        use bitset::SetOperations;
+        a.bba
+            .iter()
+            .map(|(a_s, a_m)| {
+                if bitset::BitSet::<N>::is_subset(a_s, q) {
+                    *a_m
+                } else {
+                    0.0f64
+                }
+            })
+            .sum()
+    }
+
+    fn pl(a: &Self::B, q: &Self::Q) -> f64 {
+        todo!();
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
 }
