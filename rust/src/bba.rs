@@ -141,7 +141,9 @@ pub mod bitset {
 
         #[test]
         fn test_not() {
-            todo!("This test is unimplemented.");
+            let a = BitSet::<5>::from_buf([0b01110]);
+            let a_not = BitSet::<5>::not(&a);
+            assert!(BitSet::<5>::eq(&a_not, &BitSet::<5>::from_buf([0b10001])));
         }
     }
 }
