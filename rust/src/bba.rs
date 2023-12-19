@@ -12,6 +12,8 @@ pub mod bitset {
         fn is_subset(a: &Self::S, b: &Self::S) -> bool;
         /// Return the bitwise not.
         fn not(a: &Self::S) -> Self::S;
+        /// Return whether two sets are equal.
+        fn eq(a: &Self::S, b: &Self::S) -> bool;
     }
 
     pub struct BitSet<const N: usize>
@@ -85,6 +87,45 @@ pub mod bitset {
 
             *z.last_mut().unwrap() &= mask;
             BitSet::<N>::from_buf(z)
+        }
+
+        /// Return whether two sets are equal.
+        fn eq(a: &Self::S, b: &Self::S) -> bool {
+            a.buf().iter().zip(b.buf()).map(|(a, b)| a == b).all(|x| x)
+        }
+    }
+
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+
+        #[test]
+        fn test_union() {
+            let a = BitSet::<5>::from_buf([0b01110]);
+            let b = BitSet::<5>::from_buf([0b10001]);
+            let a_union_b = BitSet::<5>::union(&a, &b);
+
+            assert!(BitSet::<5>::eq(
+                &a_union_b,
+                &BitSet::<5>::from_buf([0b11111])
+            ));
+
+            assert!(!BitSet::<5>::eq(&a_union_b, &a))
+        }
+
+        #[test]
+        fn test_intersection() {
+            todo!("This test is unimplemented.");
+        }
+
+        #[test]
+        fn test_is_subset() {
+            todo!("This test is unimplemented.");
+        }
+
+        #[test]
+        fn test_not() {
+            todo!("This test is unimplemented.");
         }
     }
 }
