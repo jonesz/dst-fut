@@ -115,7 +115,18 @@ pub mod bitset {
 
         #[test]
         fn test_intersection() {
-            todo!("This test is unimplemented.");
+            let a = BitSet::<5>::from_buf([0b01110]);
+            let b = BitSet::<5>::from_buf([0b10001]);
+            let a_intersection_b = BitSet::<5>::intersection(&a, &b);
+
+            assert!(BitSet::<5>::eq(
+                &a_intersection_b,
+                &BitSet::<5>::from_buf([0b00000])
+            ));
+
+            let c = BitSet::<5>::from_buf([0b01010]);
+            let a_intersection_c = BitSet::<5>::intersection(&a, &c);
+            assert!(BitSet::<5>::eq(&a_intersection_c, &c))
         }
 
         #[test]
