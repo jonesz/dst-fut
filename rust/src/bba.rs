@@ -131,7 +131,12 @@ pub mod bitset {
 
         #[test]
         fn test_is_subset() {
-            todo!("This test is unimplemented.");
+            let a = BitSet::<5>::from_buf([0b01110]);
+            let b = BitSet::<5>::from_buf([0b10001]);
+            assert!(!BitSet::<5>::is_subset(&a, &b));
+
+            let c = BitSet::<5>::from_buf([0b10000]);
+            assert!(BitSet::<5>::is_subset(&c, &b));
         }
 
         #[test]
