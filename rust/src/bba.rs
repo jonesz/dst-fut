@@ -3,45 +3,48 @@ use super::dst::DST;
 pub mod bitset {
     pub trait SetOperations {
         type S;
+
         /// Compute the union between two sets.
         fn union(a: &Self::S, b: &Self::S) -> Self::S;
         /// Compute the intersection between two sets.
         fn intersection(a: &Self::S, b: &Self::S) -> Self::S;
         /// Compute whether 'a' is a subset of 'b'.
         fn is_subset(a: &Self::S, b: &Self::S) -> bool;
+        /// Return the bitwise not.
+        fn not(a: &Self::S) -> Self::S;
     }
 
     pub struct BitSet<const N: usize>
     where
-        [(); (N / std::mem::size_of::<u8>()) + 1]:,
+        [(); (N / std::mem::size_of::<usize>()) + 1]:,
     {
-        buf: [u8; (N / std::mem::size_of::<u8>()) + 1],
+        buf: [u8; (N / std::mem::size_of::<usize>()) + 1],
     }
 
     impl<const N: usize> BitSet<N>
     where
-        [(); (N / std::mem::size_of::<u8>()) + 1]:,
+        [(); (N / std::mem::size_of::<usize>()) + 1]:,
     {
         /// Wrap a BitSet struct around something that can be turned into the apppropiate
         /// sized buf.
-        pub fn from_buf(buf: impl Into<[u8; (N / std::mem::size_of::<u8>()) + 1]>) -> Self {
+        pub fn from_buf(buf: impl Into<[u8; (N / std::mem::size_of::<usize>()) + 1]>) -> Self {
             BitSet { buf: buf.into() }
         }
 
-        fn buf(&self) -> &[u8; (N / std::mem::size_of::<u8>()) + 1] {
+        fn buf(&self) -> &[u8; (N / std::mem::size_of::<usize>()) + 1] {
             &self.buf
         }
     }
 
     impl<const N: usize> SetOperations for BitSet<N>
     where
-        [(); (N / std::mem::size_of::<u8>()) + 1]:,
+        [(); (N / std::mem::size_of::<usize>()) + 1]:,
     {
         type S = Self;
 
         /// Compute the union between two sets.
         fn union(a: &Self::S, b: &Self::S) -> Self::S {
-            let mut z = [0u8; (N / std::mem::size_of::<u8>()) + 1];
+            let mut z = [0u8; (N / std::mem::size_of::<usize>()) + 1];
             for (idx, mem) in z.iter_mut().enumerate() {
                 *mem = a.buf().get(idx).unwrap() | b.buf().get(idx).unwrap();
             }
@@ -50,7 +53,7 @@ pub mod bitset {
 
         /// Compute the intersection between two sets.
         fn intersection(a: &Self::S, b: &Self::S) -> Self::S {
-            let mut z = [0u8; (N / std::mem::size_of::<u8>()) + 1];
+            let mut z = [0u8; (N / std::mem::size_of::<usize>()) + 1];
             for (idx, mem) in z.iter_mut().enumerate() {
                 *mem = a.buf().get(idx).unwrap() & b.buf().get(idx).unwrap();
             }
@@ -65,19 +68,30 @@ pub mod bitset {
                 .map(|(a, b)| a & b == *a)
                 .all(|x| x)
         }
+
+        /// Return the bitwise not.
+        fn not(a: &Self::S) -> Self::S {
+            let mut z = [0u8; (N / std::mem::size_of::<usize>()) + 1];
+            for (idx, mem) in z.iter_mut().enumerate() {
+                *mem = !(a.buf().get(idx).unwrap())
+            }
+
+            // TODO: Clear the upper bits of the last u8.
+            BitSet::<N>::from_buf(z)
+        }
     }
 }
 
 pub struct BBA<const N: usize>
 where
-    [(); (N / std::mem::size_of::<u8>()) + 1]:,
+    [(); (N / std::mem::size_of::<usize>()) + 1]:,
 {
     bba: Vec<(bitset::BitSet<N>, f64)>,
 }
 
 impl<const N: usize> DST for BBA<N>
 where
-    [(); (N / std::mem::size_of::<u8>()) + 1]:,
+    [(); (N / std::mem::size_of::<usize>()) + 1]:,
 {
     type Q = bitset::BitSet<N>;
     type B = BBA<N>;
