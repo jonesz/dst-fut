@@ -185,4 +185,48 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_bel() {
+        let MASS: BBA<3> = BBA {
+            bba: vec![
+                (bitset::BitSet::<3>::from_buf([0b100]), 0.35f64),
+                (bitset::BitSet::<3>::from_buf([0b010]), 0.25f64),
+                (bitset::BitSet::<3>::from_buf([0b001]), 0.15f64),
+                (bitset::BitSet::<3>::from_buf([0b110]), 0.06f64),
+                (bitset::BitSet::<3>::from_buf([0b101]), 0.05f64),
+                (bitset::BitSet::<3>::from_buf([0b011]), 0.04f64),
+                (bitset::BitSet::<3>::from_buf([0b111]), 00.1f64),
+            ],
+        };
+
+        assert_eq!(
+            0.35,
+            BBA::<3>::bel(&MASS, &bitset::BitSet::<3>::from_buf([0b100]))
+        );
+
+        assert_eq!(
+            0.25,
+            BBA::<3>::bel(&MASS, &bitset::BitSet::<3>::from_buf([0b010]))
+        );
+
+        assert_eq!(
+            0.15,
+            BBA::<3>::bel(&MASS, &bitset::BitSet::<3>::from_buf([0b001]))
+        );
+
+        assert!(
+            (0.66 - BBA::<3>::bel(&MASS, &bitset::BitSet::<3>::from_buf([0b110]))).abs() < 0.01
+        );
+
+        assert!(
+            (0.55 - BBA::<3>::bel(&MASS, &bitset::BitSet::<3>::from_buf([0b101]))).abs() < 0.01
+        );
+
+        assert!(
+            (0.44 - BBA::<3>::bel(&MASS, &bitset::BitSet::<3>::from_buf([0b011]))).abs() < 0.01
+        );
+
+        assert!((1.0 - BBA::<3>::bel(&MASS, &bitset::BitSet::<3>::from_buf([0b111]))).abs() < 0.01);
+    }
 }
