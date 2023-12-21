@@ -4,6 +4,6 @@ pub trait DST {
     /// The query.
     type Q;
 
-    fn bel(assignment: &Self::B, q: &Self::Q) -> f64;
-    fn pl(assignment: &Self::B, q: &Self::Q) -> f64;
+    fn bel(m: &Self::B, q: &Self::Q) -> f64;
+    fn pl(m: &Self::B, q: &Self::Q) -> f64;
 }

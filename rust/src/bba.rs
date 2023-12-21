@@ -162,13 +162,13 @@ where
     type Q = bitset::BitSet<N>;
     type B = BBA<N>;
 
-    fn bel(a: &Self::B, q: &Self::Q) -> f64 {
+    fn bel(m: &Self::B, q: &Self::Q) -> f64 {
         use bitset::SetOperations;
-        a.bba
+        m.bba
             .iter()
-            .map(|(a_s, a_m)| {
-                if bitset::BitSet::<N>::is_subset(a_s, q) {
-                    *a_m
+            .map(|(m_s, m_m)| {
+                if bitset::BitSet::<N>::is_subset(m_s, q) {
+                    *m_m
                 } else {
                     0.0f64
                 }
@@ -176,8 +176,9 @@ where
             .sum()
     }
 
-    fn pl(a: &Self::B, q: &Self::Q) -> f64 {
-        todo!();
+    fn pl(m: &Self::B, q: &Self::Q) -> f64 {
+        use bitset::SetOperations;
+        1.0f64 - Self::bel(m, &Self::Q::not(q))
     }
 }
 
