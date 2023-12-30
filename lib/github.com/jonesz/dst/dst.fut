@@ -1,37 +1,29 @@
---| Reasoning with uncertainty via Dempster-Shafer Theory.
--- Ethan Jones <etn.jones@gmail.com>, 2023.
-
-import "../../diku-dk/containers/bitset"
-import "bba"
+import "set"
 
 module type dst = {
-	module u_set : bitset
-
-	type m
-	type t [n]
+	type s
+	type t = (s, f64)
 
  	-- | Given a subset of the frame of discernment, compute the the belief.
- 	val bel [n][f] : [f]t[(n - 1) / u_set.nbs + 1] -> u_set.bitset[(n - 1) / u_set.nbs + 1] -> m
+ 	val bel [f] : [f]t -> s -> f64
  	-- | Given a subset of the frame of discernment, compute the the plausability.
- 	val pl  [n][f] : [f]t[(n - 1) / u_set.nbs + 1] -> u_set.bitset[(n - 1) / u_set.nbs + 1] -> m
+ 	val pl  [f] : [f]t -> s -> f64
 }
 
-module mk_dst(B: bba): dst with m = B.m with t[n] = B.t[n] = {
-	module u_set = B.u_set
+module mk_dst(X: set): dst with s = X.t = {
+	type s = X.t
+	type t = (s, f64)
 
-	type m = B.m
-	type t [n] = B.t [n]
+	def bel (e: []t) q =
+		map (.0) e
+		|> map (\z 
+			-> if (X.is_subset z q)
+				then 1.0f64
+				else 0.0f64
+		) |> map2 (f64.*) (map (.1) e)
+		|> f64.sum
 
-	def bel e q =
-		map (B.set) e
-		|> map (\p 
-			-> if (u_set.is_subset p q)
-				then B.m_real.i64 1
-				else B.m_real.i64 0
-		) |> map2 (B.m_real.*) (map (B.mass) e)
-		|> B.m_real.sum
-
-	def pl e q =
+	def pl [f] (e: [f]t) (q: s): f64 =
 		-- pl(Q) = 1 - bl(not Q)
-		u_set.complement q |> bel e |> (B.m_real.-) (B.m_real.i64 1)
+		X.not q |> bel e |> (f64.-) 1.0f64
 }

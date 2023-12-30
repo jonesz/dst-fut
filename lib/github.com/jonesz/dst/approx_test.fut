@@ -1,5 +1,18 @@
 import "approx"
-import "bba"
-import "../../diku-dk/containers/bitset"
+import "set"
 
-module approx_i32 = mk_approx (mk_bba (mk_bitset i32) f64)
+module a = mk_approx(mk_set_integral(i32))
+
+-- ==
+-- entry: kx_i32
+-- input  { }
+-- output { }
+entry kx_i32 =
+	???
+
+-- ==
+-- entry: summarize_i32
+-- input { }
+-- output { }
+entry summarize_i32 = 
+	???

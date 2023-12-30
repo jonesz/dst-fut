@@ -1,51 +1,45 @@
---| Approximation schemes in Dempster-Shafer Theory.
--- Ethan Jones <etn.jones@gmail.com>, 2023.
-
-import "../../diku-dk/containers/bitset"
-import "bba"
+import "set"
+import "../../diku-dk/sorts/merge_sort"
 
 module type approx = {
-	module u_set : bitset
-	type t [n] 
-
-	-- | Given focal elements that sum to less than < 1, normalize them to 1.
-	val normalize [n][w] : [w]t[(n - 1) / u_set.nbs + 1] -> [w]t[(n - 1) / u_set.nbs + 1]
+	type s
+	type t = (s, f64)
 
 	-- | Return the k largest BBAs within the focal element.
-	val kx [n][w] : (k: i64) -> [w]t[(n - 1) / u_set.nbs + 1] -> [k]t[(n - 1) / u_set.nbs + 1]
+	val kx [w] : (k: i64) -> [w]t -> [k]t
 
 	-- | Return the k largest BBAs within the focal element with the rest union'd.
-	val summarize [n][w] : (k: i64) -> [w]t[(n - 1) / u_set.nbs + 1] -> [k+1]t[(n - 1) / u_set.nbs + 1]
+	val summarize [w] : (k: i64) -> [w]t -> [k+1]t
 }
 
-module mk_approx (B: bba): approx with t[n] = B.t[n] = {
-	module u_set = B.u_set
-	type t [n] = B.t[n]
+module mk_approx(X: set): approx with s = X.t = {
+	type s = X.t
+	type t = (s, f64)
 
-	def normalize [w][n] (e: [w]t[(n - 1) / B.u_set.nbs + 1]): [w]t[(n - 1) / B.u_set.nbs + 1] =
-		let total = map (B.mass) e |> B.m_real.sum
-		in map (\e_i -> (B.m_real./) (B.mass e_i) total) e |> ???
-	
-	def kx [n][w] (k: i64) (e: [w]t[(n - 1) / u_set.nbs + 1]): [k]t[(n - 1) / u_set.nbs + 1] =
-		let sorted = B.sort e |> reverse
+	def normalize (e: []t): []t =
+		let total = map (.1) e |> f64.sum
+		in map (\z -> (f64./) z total) (map (.1) e) |> zip (map (.0) e)
+
+	def kx [f] (k: i64) (e: [f]t): [k]t =
+		let sorted = merge_sort_by_key (.1) (f64.<=) e |> reverse
 		-- if k is larger than w, we need to pad with `nil`.
 		-- TODO: We're working under CWA; does `nil` work in OWA?
-		in (if k > w
-			then (++) sorted (replicate (k - w) B.nil) :> [k]t[(n - 1) / u_set.nbs + 1]
+		in (if k > f
+			then (++) sorted (replicate (k - f) (X.nil, 0.0f64)) :> [k]t
 			else take k sorted
 		) |> normalize
 
-	def summarize [n][w] (k: i64) (e: [w]t[(n - 1) / B.u_set.nbs + 1]): [k+1]t[(n - 1) / B.u_set.nbs + 1] =
+	def summarize [f] (k: i64) (e: [f]t): [k+1]t =
 		-- Given a set of focal elements, compute the union/sum of their sets/masses.
-		let f (a: []t[(n - 1) / B.u_set.nbs + 1]): t[(n - 1) / B.u_set.nbs + 1] = 
-			let a_union = map (B.set)  a |> reduce (B.u_set.union) (B.set B.nil)
-			let a_sum   = map (B.mass) a |> B.m_real.sum
-			in B.mk a_union a_sum
+		let sm (a: []t): t = 
+			let a_union = map (.0) a |> reduce (X.union) (X.nil)
+			let a_sum   = map (.1) a |> f64.sum
+			in (a_union, a_sum)
 
-		let sorted = B.sort e |> reverse
+		let sorted = merge_sort_by_key (.1) (f64.<=) e |> reverse
 		-- if k is larger than w, we need to pad with nil.
 		-- TODO: We're working under CWA; does `nil` work in OWA?
-		in if k > w
-			then (++) sorted (replicate ((k + 1) - w) B.nil) :> [k+1]t[(n - 1) / B.u_set.nbs + 1]
-			else (++) (take k sorted) [(f (drop k sorted))]
+		in if k > f
+			then (++) sorted (replicate ((k + 1) - f) (X.nil, 0.0f64)) :> [k+1]t
+			else (++) (take k sorted) [(sm (drop k sorted))]
 }
