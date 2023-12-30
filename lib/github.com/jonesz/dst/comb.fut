@@ -1,66 +1,66 @@
-import "base"
 import "../../diku-dk/sorts/radix_sort"
+import "set"
 
 module type comb = {
-	-- | Type to represent a set within the universe.
-	type t
-	-- | Scalar type to represent mass.
-	type m
+	type s
+	type t = (s, f64)
 
-	val comb_dempster [b][c] : [b](t, m) -> [c](t, m) -> [](t, m)
+	val comb_dempster [b][c] : [b]t -> [c]t -> []t
 }
 
-module mk_comb_integral(X: integral) (M: real): comb with t = X.t with m = M.t = {
-	type t = X.t
-	type m = M.t
-
-	module B = mk_base_integral X
+module mk_comb(X: set): comb with s = X.t = {
+	type s = X.t
+	type t = (s, f64)
 
 	def comb_dempster b c =
 		let K =
 	 		map (\(b_set, b_mass) ->
 	 			map (\(c_set, c_mass) ->
-	 				let cond = B.intersection b_set c_set |> B.is_empty
+	 				let cond = X.intersection b_set c_set |> X.is_empty
 	 				in if cond
-	 					then (M.*) b_mass c_mass
-	 					else (M.i32 0)
+	 					then (f64.*) b_mass c_mass
+	 					else (0.0f64)
 	 				) c
-	 			) b |> flatten |> reduce (M.+) (M.i32 0)
+	 			) b |> flatten |> reduce (f64.+) 0.0f64
 
-	 	let conflict = (M.-) (M.i32 1) K |> (M./) (M.i32 1)
+	 	let conflict = (f64.-) 1.0f64 K |> (f64./) 1.0f64
 
-	 	-- We compute the intersections of B/C resulting in [A]. [A] must
-	 	-- be reduced to a set; remove the duplicate sets in [A] to form A.
-	 	-- Then for each value in A, sum the corresponding values in [A].
+		-- Compute all the intersections of B/C forming A, where A is an arr
+		-- potentially containing duplicates. Sort A, then remove the duplicates, to
+		-- form { A }. Then for each value within { A }, sum the corresponding values
+		-- in A.
 
-	 	-- Compute [A], sorted.
-	 	let A_dup =
+	 	let A =
 	 		map (\(b_set, b_mass) ->
 	 			map (\(c_set, c_mass) ->
-	 				let a_set = B.intersection b_set c_set
-	 				let cond  = B.is_empty a_set |> not
+	 				let a_set = X.intersection b_set c_set
+	 				let cond  = X.is_empty a_set |> not
 	 				in if cond
-	 					then (a_set, (M.*) b_mass c_mass)
-	 					else (a_set, (M.i32 0))
+	 					then (a_set, (f64.*) b_mass c_mass)
+	 					else (a_set, 0.0f64)
 	 			) c
 	 		) b |> flatten
 
-	 	-- Compute the keys of A.
-	 	let A_dedup_key =
-	 		let keys = map (.0) A_dup
-	 		in zip3 (indices keys) keys (rotate (-1) keys)
-	 		|> filter (\(i,x,y) -> i == 0 || (B.is_eq x y |> not))
+	 	-- Compute the keys of A, removing duplicates.
+	 	let A_set_keys =
+	 		let sorted_keys = map (.0) A |> radix_sort X.num_bits X.get_bit
+	 		in zip3 (indices sorted_keys) sorted_keys (rotate (-1) sorted_keys)
+	 		|> filter (\(i,x,y) -> i == 0 || (X.is_eq x y |> not))
 	 		|> map (.1)
-	 		|> radix_sort B.num_bits B.get_bit -- TODO: Bug here.
 
+		-- For each value in A_set_keys, sum the equivalent keys in A.
+	 	let A_set = map (\a_k ->
+	 		map (\(l_k, l_m) -> 
+				if X.is_eq a_k l_k
+	 				then l_m
+	 				else 0.0f64
+	 			) A 
+				|> reduce (f64.+) 0.0f64
+	 		) A_set_keys 
+		|> map (f64.* conflict) |> zip A_set_keys
 
-	 	let A = map (\k ->
-	 		map (\(l_set, l_mass) -> 
-	 			if B.is_eq k l_set
-	 				then l_mass
-	 				else (M.i32 0)
-	 			) A_dup |> reduce (M.+) (M.i32 0)
-	 		) A_dedup_key |> map (M.* conflict) |> zip A_dedup_key
-
-	 	in filter (\(_, m) -> ((M.>) m (M.i32 0))) A
+		-- Remove zero masses.
+		-- TODO: I don't think this is necessarily needed; especially if we do some
+		-- approximation/padding scheme to force a known-sized arr.
+	 	in filter (\(_, m) -> (f64.>) m 0.0f64) A_set
 }

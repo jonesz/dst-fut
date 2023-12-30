@@ -1,46 +1,29 @@
---| Reasoning with uncertainty via Dempster-Shafer Theory.
--- Ethan Jones <etn.jones@gmail.com>, 2023.
-
-import "base"
-import "comb"
-import "../../diku-dk/sorts/radix_sort"
+import "set"
 
 module type dst = {
-	-- | Type to represent a set within the universe.
-	type t
-	-- | Scalar type to represent mass.
-	type m
+	type s
+	type t = (s, f64)
 
  	-- | Given a subset of the frame of discernment, compute the the belief.
- 	val bel [f] : [f](t, m) -> t -> m
+ 	val bel [f] : [f]t -> s -> f64
  	-- | Given a subset of the frame of discernment, compute the the plausability.
- 	val pl  [f] : [f](t, m) -> t -> m
- 
- 	-- We avoid irregular arrays here by requiring the frame of discernment to be of a certain length.
- 	-- rule, neutral_element, then the sets of FoD. TODO: Is the actual "neutral element" a tagged type.
-    -- val comb_reduce [f][z] : ([f](t, m) -> [f](t, m) -> [f](t, m)) -> [f](t, m) -> [z][f](t, m) -> [f](t, m)
-
-	include comb with t = t with m = m
+ 	val pl  [f] : [f]t -> s -> f64
 }
 
-module mk_dst_integral(X: integral) (M: real): dst with t = X.t with m = M.t = {
-	type t = X.t
-	type m = M.t
+module mk_dst(X: set): dst with s = X.t = {
+	type s = X.t
+	type t = (s, f64)
 
-	module B = mk_base_integral X
-	module C = mk_comb_integral X M
+	def bel (e: []t) q =
+		map (.0) e
+		|> map (\z 
+			-> if (X.is_subset z q)
+				then 1.0f64
+				else 0.0f64
+		) |> map2 (f64.*) (map (.1) e)
+		|> f64.sum
 
-	def bel e q =
-		map (\(b_set, b_mass) -> 
-			let cond = B.is_subset b_set q
-			in if cond
-				then b_mass
-				else (M.i32 0)
-		) e |> reduce (M.+) (M.i32 0)
-
-	def pl e q =
+	def pl [f] (e: [f]t) (q: s): f64 =
 		-- pl(Q) = 1 - bl(not Q)
-		B.not q |> bel e |> (M.-) (M.i32 1)
-
-	open C
+		X.not q |> bel e |> (f64.-) 1.0f64
 }
