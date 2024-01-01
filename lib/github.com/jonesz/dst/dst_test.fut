@@ -19,3 +19,6 @@ entry bel_i32 s m =
 -- output { [ 0.5f64, 0.8, 1.0 ] }
 entry pl_i32 s m =
 	map (d.pl (zip s m)) s
+
+import "approx"
+import "comb"
