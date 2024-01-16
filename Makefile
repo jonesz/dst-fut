@@ -3,8 +3,7 @@ all: test
 test:
 	futhark test \
 	lib/github.com/jonesz/dst/dst_test.fut \
-	lib/github.com/jonesz/dst/comb_test.fut \
-	lib/github.com/jonesz/dst/approx_test.fut
+	lib/github.com/jonesz/dst/comb_test.fut
 
 .PHONY: clean
 
@@ -15,4 +14,3 @@ clean:
 	lib/github.com/jonesz/dst/*.actual \
 	lib/github.com/jonesz/dst/dst_test \
 	lib/github.com/jonesz/dst/comb_test \
-	lib/github.com/jonesz/dst/approx_test
